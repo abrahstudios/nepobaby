@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nepo Baby da Moda — Análise de Canal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Caveat:wght@500;700&family=Space+Mono:ital@0;1&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#FAF8F5;
+  --dark:#1A0F0D;
+  --red:#C0271D;
+  --red-muted:#E8736C;
+  --beige:#C9A882;
+  --beige-light:#EDE3D8;
+  --off:#F5EFE8;
+  --text:#1A0F0D;
+  --muted:#7A6355;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;overflow-x:hidden;cursor:none}
+
+/* CURSOR */
+.cursor{position:fixed;pointer-events:none;z-index:9999;mix-blend-mode:multiply}
+.cursor-dot{width:8px;height:8px;background:var(--red);border-radius:50%;position:fixed;transform:translate(-50%,-50%);transition:transform 0.1s;pointer-events:none;z-index:9999}
+.cursor-ring{width:36px;height:36px;border:1.5px solid var(--red);border-radius:50%;position:fixed;transform:translate(-50%,-50%);pointer-events:none;z-index:9998;transition:transform 0.15s ease,width 0.3s,height 0.3s,opacity 0.3s}
+.cursor-ring.hover{width:60px;height:60px;opacity:0.5}
+
+/* NOISE */
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:0.035;pointer-events:none;z-index:9997}
+
+/* LOADER */
+.loader{position:fixed;inset:0;background:var(--dark);z-index:9990;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity 0.8s ease,transform 0.8s ease}
+.loader.hidden{opacity:0;pointer-events:none;transform:translateY(-100%)}
+.loader-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,10vw,120px);color:var(--bg);letter-spacing:2px;overflow:hidden}
+.loader-title span{display:inline-block;animation:slideUp 0.8s cubic-bezier(0.23,1,0.32,1) forwards;opacity:0}
+.loader-line{width:0;height:1px;background:var(--red);margin-top:16px;animation:lineGrow 1s 0.8s ease forwards}
+.loader-sub{font-family:'Space Mono',monospace;font-size:11px;color:var(--beige);letter-spacing:3px;margin-top:12px;opacity:0;animation:fadeIn 0.5s 1.2s forwards}
+@keyframes slideUp{from{transform:translateY(120%);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes lineGrow{from{width:0}to{width:200px}}
+@keyframes fadeIn{to{opacity:1}}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:20px 40px;mix-blend-mode:multiply}
+.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:3px;color:var(--dark);opacity:0.6}
+.nav-date{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--muted)}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:flex-end;padding:0 40px 60px;position:relative;overflow:hidden;background:var(--dark)}
+.hero-bg-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Bebas Neue',sans-serif;font-size:clamp(120px,22vw,320px);color:rgba(255,255,255,0.03);white-space:nowrap;letter-spacing:8px;pointer-events:none;user-select:none}
+.hero-tag{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:4px;color:var(--red-muted);text-transform:uppercase;margin-bottom:20px;opacity:0;animation:fadeIn 0.6s 1.8s forwards}
+.hero-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(64px,13vw,180px);color:var(--bg);line-height:0.9;letter-spacing:2px}
+.hero-title .line{overflow:hidden;display:block}
+.hero-title .line span{display:inline-block;transform:translateY(120%);animation:slideUp 0.9s cubic-bezier(0.23,1,0.32,1) forwards}
+.hero-title .line:nth-child(1) span{animation-delay:1.6s}
+.hero-title .line:nth-child(2) span{animation-delay:1.75s}
+.hero-title .line:nth-child(3) span{animation-delay:1.9s;color:var(--red)}
+.hero-sub{display:flex;justify-content:space-between;align-items:flex-end;margin-top:40px;opacity:0;animation:fadeIn 0.6s 2.1s forwards}
+.hero-desc{font-size:15px;color:rgba(250,248,245,0.5);max-width:380px;line-height:1.6;font-weight:400}
+.hero-stats{display:flex;gap:40px}
+.hero-stat{text-align:right}
+.hero-stat .n{font-family:'Bebas Neue',sans-serif;font-size:42px;color:var(--bg);line-height:1}
+.hero-stat .l{font-family:'Space Mono',monospace;font-size:9px;color:rgba(250,248,245,0.4);letter-spacing:2px;text-transform:uppercase}
+.scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0;animation:fadeIn 0.6s 2.4s forwards}
+.scroll-hint span{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:3px;color:rgba(250,248,245,0.3)}
+.scroll-line{width:1px;height:40px;background:linear-gradient(to bottom,var(--red),transparent);animation:scrollAnim 1.5s 2.4s infinite}
+@keyframes scrollAnim{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+/* SECTIONS */
+section{padding:100px 40px;position:relative}
+.section-header{display:flex;align-items:baseline;gap:16px;margin-bottom:60px;border-bottom:1px solid var(--beige-light);padding-bottom:16px}
+.section-num{font-family:'Space Mono',monospace;font-size:11px;color:var(--red);letter-spacing:2px}
+.section-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,5vw,64px);letter-spacing:1px;color:var(--dark)}
+.section-desc{font-size:13px;color:var(--muted);margin-left:auto;text-align:right;max-width:240px;line-height:1.5;font-weight:400}
+
+/* METRICS */
+.metrics-s{background:var(--off)}
+.metrics-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--beige-light)}
+.metric-item{background:var(--off);padding:40px 32px;position:relative;overflow:hidden;transition:background 0.3s}
+.metric-item:hover{background:var(--bg)}
+.metric-item::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--red);transform:scaleX(0);transform-origin:left;transition:transform 0.4s cubic-bezier(0.23,1,0.32,1)}
+.metric-item:hover::before{transform:scaleX(1)}
+.metric-label{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:12px}
+.metric-value{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,4vw,56px);color:var(--red);line-height:1}
+.metric-sub{font-size:11px;color:var(--muted);margin-top:6px;font-weight:400}
+
+/* VIDEOS */
+.videos-s{background:var(--bg)}
+.video-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start}
+.video-list{display:flex;flex-direction:column;gap:1px;background:var(--beige-light)}
+.video-row{background:var(--bg);padding:20px 24px;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;transition:background 0.2s;position:relative}
+.video-row:hover{background:var(--off)}
+.video-row-info{}
+.video-row-title{font-size:13px;font-weight:700;color:var(--dark);margin-bottom:6px;line-height:1.3}
+.video-row-meta{display:flex;gap:16px}
+.video-chip{font-family:'Space Mono',monospace;font-size:10px;padding:2px 8px;border-radius:20px}
+.chip-views{background:var(--beige-light);color:var(--muted)}
+.chip-ret{background:var(--dark);color:var(--bg)}
+.chip-ret.high{background:var(--red);color:#fff}
+.chip-flag{background:#FFF3E0;color:#B85C00;font-size:9px;padding:2px 6px;border-radius:20px;font-family:'Space Mono',monospace}
+.video-bar-wrap{width:80px}
+.video-bar-track{height:4px;background:var(--beige-light);border-radius:2px;overflow:hidden}
+.video-bar-fill{height:100%;background:var(--red);border-radius:2px;transition:width 1s ease}
+.chart-wrap{position:relative;height:340px}
+.chart-label{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:12px;text-transform:uppercase}
+
+/* AUDIENCE */
+.audience-s{background:var(--dark)}
+.audience-s .section-title{color:var(--bg)}
+.audience-s .section-num{color:var(--red-muted)}
+.audience-s .section-desc{color:rgba(250,248,245,0.4)}
+.audience-s .section-header{border-color:rgba(255,255,255,0.1)}
+.audience-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px}
+.aud-card{border:1px solid rgba(255,255,255,0.08);border-radius:4px;padding:32px;transition:border-color 0.3s,transform 0.3s}
+.aud-card:hover{border-color:var(--red);transform:translateY(-4px)}
+.aud-card .ac-label{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:3px;color:rgba(250,248,245,0.35);text-transform:uppercase;margin-bottom:16px}
+.aud-card .ac-value{font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--bg);line-height:1}
+.aud-card .ac-sub{font-size:13px;color:rgba(250,248,245,0.5);margin-top:6px;font-weight:400}
+.aud-card.accent{background:var(--red);border-color:var(--red)}
+.aud-card.accent .ac-label{color:rgba(255,255,255,0.6)}
+.aud-card.accent .ac-value{color:#fff}
+.aud-card.accent .ac-sub{color:rgba(255,255,255,0.75)}
+.aud-charts{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px}
+.aud-chart-card{border:1px solid rgba(255,255,255,0.08);border-radius:4px;padding:32px}
+.aud-chart-title{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;color:rgba(250,248,245,0.4);text-transform:uppercase;margin-bottom:20px}
+
+/* TRAFFIC */
+.traffic-s{background:var(--off)}
+.traffic-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+.traffic-editorial{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,7vw,96px);color:var(--dark);line-height:0.95}
+.traffic-editorial em{color:var(--red);font-style:normal}
+.traffic-editorial .traffic-note{font-family:'Caveat',cursive;font-size:clamp(20px,3vw,32px);color:var(--muted);display:block;margin-top:8px;font-weight:500;line-height:1.3}
+.traffic-list{display:flex;flex-direction:column;gap:0}
+.traffic-row{display:grid;grid-template-columns:1fr 56px;align-items:center;gap:16px;padding:16px 0;border-bottom:1px solid var(--beige-light)}
+.traffic-row:last-child{border-bottom:none}
+.traffic-source{font-size:13px;color:var(--dark);font-weight:400}
+.traffic-bar-wrap{display:flex;align-items:center;gap:10px}
+.traffic-bar{height:3px;background:var(--beige-light);border-radius:2px;flex:1;overflow:hidden;min-width:100px}
+.traffic-bar-fill{height:100%;background:var(--red);border-radius:2px}
+.traffic-pct{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--red);text-align:right;white-space:nowrap}
+.traffic-row-full{display:grid;grid-template-columns:1fr 80px 56px;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid var(--beige-light)}
+
+/* MONETIZATION */
+.mono-s{background:var(--bg)}
+.mono-progress-wrap{margin-bottom:48px}
+.mono-progress-label{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+.mono-progress-label .pl-left{font-size:14px;color:var(--dark);font-weight:700}
+.mono-progress-label .pl-right{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted)}
+.mono-track{height:8px;background:var(--beige-light);border-radius:4px;overflow:hidden;position:relative}
+.mono-fill{height:100%;background:linear-gradient(to right,var(--red),var(--red-muted));border-radius:4px;width:0;transition:width 1.5s cubic-bezier(0.23,1,0.32,1)}
+.mono-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--beige-light)}
+.mono-card{background:var(--bg);padding:36px 32px;transition:background 0.3s}
+.mono-card:hover{background:var(--off)}
+.mono-card .mc-tag{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:12px}
+.mono-card .mc-val{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,3vw,40px);color:var(--dark);line-height:1;margin-bottom:4px}
+.mono-card .mc-sub{font-size:12px;color:var(--muted);font-weight:400}
+.mono-card.highlight{background:var(--dark)}
+.mono-card.highlight .mc-tag{color:rgba(250,248,245,0.4)}
+.mono-card.highlight .mc-val{color:var(--bg)}
+.mono-card.highlight .mc-sub{color:rgba(250,248,245,0.5)}
+
+/* INSIGHTS */
+.insights-s{background:var(--dark)}
+.insights-s .section-title{color:var(--bg)}
+.insights-s .section-num{color:var(--red-muted)}
+.insights-s .section-desc{color:rgba(250,248,245,0.4)}
+.insights-s .section-header{border-color:rgba(255,255,255,0.1)}
+.insights-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.insight-card{border:1px solid rgba(255,255,255,0.08);border-radius:4px;padding:36px;transition:all 0.3s;position:relative;overflow:hidden}
+.insight-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:0;background:var(--red);transition:height 0.5s cubic-bezier(0.23,1,0.32,1)}
+.insight-card:hover{transform:translateY(-4px);border-color:rgba(255,255,255,0.15)}
+.insight-card:hover::before{height:100%}
+.insight-card .ic-tag{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--red-muted);text-transform:uppercase;margin-bottom:12px}
+.insight-card .ic-title{font-family:'Caveat',cursive;font-size:26px;font-weight:700;color:var(--bg);margin-bottom:14px;line-height:1.2}
+.insight-card .ic-body{font-size:13px;color:rgba(250,248,245,0.55);line-height:1.7;font-weight:400}
+.insight-card .ic-rec{margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08);font-family:'Space Mono',monospace;font-size:11px;color:var(--red-muted);line-height:1.5}
+.insight-card .ic-num{position:absolute;top:24px;right:28px;font-family:'Bebas Neue',sans-serif;font-size:64px;color:rgba(255,255,255,0.04);line-height:1}
+
+/* FOOTER */
+footer{background:var(--red);padding:60px 40px;display:flex;justify-content:space-between;align-items:center}
+.footer-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,5vw,64px);color:#fff;letter-spacing:2px}
+.footer-meta{text-align:right}
+.footer-meta p{font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.6);letter-spacing:2px;line-height:1.8}
+.footer-meta .big{font-family:'Bebas Neue',sans-serif;font-size:24px;color:#fff;letter-spacing:1px;display:block;margin-bottom:8px}
+
+/* SCROLL REVEAL */
+.reveal{opacity:0;transform:translateY(40px);transition:opacity 0.8s cubic-bezier(0.23,1,0.32,1),transform 0.8s cubic-bezier(0.23,1,0.32,1)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-delay-1{transition-delay:0.1s}
+.reveal-delay-2{transition-delay:0.2s}
+.reveal-delay-3{transition-delay:0.3s}
+.reveal-delay-4{transition-delay:0.4s}
+
+.bottom-aud-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:24px}
+
+/* RESPONSIVE — tablet */
+@media(max-width:900px){
+  section{padding:60px 20px}
+  nav{padding:16px 20px}
+  .hero{padding:0 20px 40px}
+  .hero-sub{flex-direction:column;gap:28px;align-items:flex-start}
+  .hero-stats{justify-content:flex-start}
+  .metrics-grid{grid-template-columns:repeat(3,1fr)}
+  .video-grid{grid-template-columns:1fr}
+  .audience-grid{grid-template-columns:1fr 1fr}
+  .aud-charts{grid-template-columns:1fr}
+  .traffic-grid{grid-template-columns:1fr}
+  .traffic-row-full{grid-template-columns:1fr 60px 48px;gap:8px}
+  .mono-grid{grid-template-columns:1fr 1fr}
+  .monetization-card{grid-template-columns:1fr 1fr}
+  .insights-grid{grid-template-columns:1fr}
+  .demo-grid{grid-template-columns:repeat(3,1fr)}
+  footer{flex-direction:column;gap:32px;text-align:center}
+  .footer-meta{text-align:center}
+}
+
+/* RESPONSIVE — mobile */
+@media(max-width:600px){
+  section{padding:48px 16px}
+  nav{padding:14px 16px}
+  .nav-date{display:none}
+  .hero{padding:0 16px 40px;min-height:100svh}
+  .hero-sub{flex-direction:column;gap:24px;align-items:flex-start}
+  .hero-stats{flex-direction:column;gap:16px;align-items:flex-start}
+  .hero-stat{text-align:left}
+  .hero-desc{font-size:13px}
+  .section-header{flex-wrap:wrap;gap:8px}
+  .section-desc{margin-left:0;text-align:left;max-width:100%}
+  .metrics-grid{grid-template-columns:1fr 1fr;gap:1px}
+  .metric-item{padding:24px 16px}
+  .video-grid{grid-template-columns:1fr}
+  .video-row{padding:14px 12px;grid-template-columns:1fr auto}
+  .video-row-meta{flex-wrap:wrap;gap:6px}
+  .video-bar-wrap{display:none}
+  .chart-wrap{height:240px}
+  .audience-grid{grid-template-columns:1fr}
+  .aud-card{padding:20px}
+  .aud-card .ac-value{font-size:40px}
+  .aud-charts{grid-template-columns:1fr}
+  .aud-chart-card{padding:20px}
+  .traffic-grid{grid-template-columns:1fr}
+  .traffic-editorial{font-size:clamp(36px,12vw,72px)}
+  .traffic-row-full{grid-template-columns:1fr 48px;gap:8px}
+  .traffic-row-full .traffic-bar{display:none}
+  .traffic-pct{font-size:16px}
+  .mono-grid{grid-template-columns:1fr}
+  .mono-card{padding:24px 20px}
+  .monetization-card{grid-template-columns:1fr}
+  .demo-grid{grid-template-columns:repeat(3,1fr)}
+  .insights-grid{grid-template-columns:1fr}
+  .insight-card{padding:24px 20px}
+  .insight-card .ic-num{font-size:44px}
+  .bottom-aud-grid{grid-template-columns:1fr}
+  div[style*="grid-template-columns:repeat(3,1fr)"]{grid-template-columns:1fr!important}
+  .loader-title{font-size:clamp(36px,15vw,80px)}
+  footer{flex-direction:column;gap:24px;padding:40px 16px;text-align:center}
+  .footer-meta{text-align:center}
+  .footer-title{font-size:clamp(24px,8vw,48px)}
+}
+</style>
+</head>
+<body>
+
+<!-- CURSOR -->
+<div class="cursor-dot" id="cursorDot"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- LOADER -->
+<div class="loader" id="loader">
+  <div class="loader-title">
+    <span style="animation-delay:0.1s">N</span><span style="animation-delay:0.15s">E</span><span style="animation-delay:0.2s">P</span><span style="animation-delay:0.25s">O</span>
+    &nbsp;
+    <span style="animation-delay:0.35s">B</span><span style="animation-delay:0.4s">A</span><span style="animation-delay:0.45s">B</span><span style="animation-delay:0.5s">Y</span>
+  </div>
+  <div class="loader-line"></div>
+  <div class="loader-sub">análise de canal · março 2026</div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Not Yet × Nocci</div>
+  <div class="nav-date">19.03.2026 · @Chicapeto</div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg-text">MODA</div>
+  <div class="hero-tag">Canal · Análise Estratégica · 28 dias</div>
+  <h1 class="hero-title">
+    <span class="line"><span>Nepo</span></span>
+    <span class="line"><span>Baby</span></span>
+    <span class="line"><span>da Moda</span></span>
+  </h1>
+  <div class="hero-sub">
+    <p class="hero-desc">28 dias de canal. 5 vídeos. 40.7K visualizações. O algoritmo continua apostando — e os dados mostram um canal em crescimento consistente.</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="n">40.7K</div>
+        <div class="l">visualizações</div>
+      </div>
+      <div class="hero-stat">
+        <div class="n">1.787</div>
+        <div class="l">inscritos</div>
+      </div>
+      <div class="hero-stat">
+        <div class="n">54%</div>
+        <div class="l">assiste na TV</div>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-hint">
+    <span>scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- METRICS -->
+<section class="metrics-s">
+  <div class="section-header reveal">
+    <span class="section-num">01</span>
+    <h2 class="section-title">Visão Geral</h2>
+    <span class="section-desc">Métricas dos primeiros 22 dias</span>
+  </div>
+  <div class="metrics-grid">
+    <div class="metric-item reveal reveal-delay-1">
+      <div class="metric-label">Visualizações (28d)</div>
+      <div class="metric-value">40.738</div>
+      <div class="metric-sub">+999% vs. período anterior</div>
+    </div>
+    <div class="metric-item reveal reveal-delay-2">
+      <div class="metric-label">Espectadores únicos</div>
+      <div class="metric-value">21.900</div>
+      <div class="metric-sub">mensais ativos</div>
+    </div>
+    <div class="metric-item reveal reveal-delay-2">
+      <div class="metric-label">Inscritos</div>
+      <div class="metric-value">1.787</div>
+      <div class="metric-sub">meta 1.000 ✓ atingida</div>
+    </div>
+    <div class="metric-item reveal reveal-delay-3">
+      <div class="metric-label">Horas de exibição</div>
+      <div class="metric-value">3.417</div>
+      <div class="metric-sub">meta YPP: 4.000h</div>
+    </div>
+    <div class="metric-item reveal reveal-delay-4">
+      <div class="metric-label">CTR de impressões</div>
+      <div class="metric-value">5,0%</div>
+      <div class="metric-sub">489k impressões totais</div>
+    </div>
+  </div>
+</section>
+
+<!-- VIDEOS -->
+<section class="videos-s">
+  <div class="section-header reveal">
+    <span class="section-num">02</span>
+    <h2 class="section-title">Performance por Vídeo</h2>
+    <span class="section-desc">Retenção, volume e engajamento</span>
+  </div>
+  <div class="video-grid">
+    <div class="reveal">
+      <div class="video-list" id="videoList">
+        <div class="video-row">
+          <div class="video-row-info">
+            <div class="video-row-title">A moda sempre foi minha casa — Nepo Doc 01</div>
+            <div class="video-row-meta">
+              <span class="video-chip chip-views">13.402 views</span>
+              <span class="video-chip chip-ret">36% ret.</span>
+
+            </div>
+          </div>
+          <div class="video-bar-wrap"><div class="video-bar-track"><div class="video-bar-fill" style="width:100%"></div></div></div>
+        </div>
+        <div class="video-row">
+          <div class="video-row-info">
+            <div class="video-row-title">001 — Pesquisa de moda em Nova York</div>
+            <div class="video-row-meta">
+              <span class="video-chip chip-views">10.421 views</span>
+              <span class="video-chip chip-ret">40% ret.</span>
+            </div>
+          </div>
+          <div class="video-bar-wrap"><div class="video-bar-track"><div class="video-bar-fill" style="width:78%"></div></div></div>
+        </div>
+        <div class="video-row">
+          <div class="video-row-info">
+            <div class="video-row-title">002 — O dia que vestimos Sarah Jessica Parker</div>
+            <div class="video-row-meta">
+              <span class="video-chip chip-views">7.141 views</span>
+              <span class="video-chip chip-ret">38% ret.</span>
+            </div>
+          </div>
+          <div class="video-bar-wrap"><div class="video-bar-track"><div class="video-bar-fill" style="width:53%"></div></div></div>
+        </div>
+        <div class="video-row">
+          <div class="video-row-info">
+            <div class="video-row-title">004 — Tour pelo ateliê da Isabela Capeto</div>
+            <div class="video-row-meta">
+              <span class="video-chip chip-views">6.662 views</span>
+              <span class="video-chip chip-ret high">45% ret.</span>
+            </div>
+          </div>
+          <div class="video-bar-wrap"><div class="video-bar-track"><div class="video-bar-fill" style="width:50%"></div></div></div>
+        </div>
+        <div class="video-row">
+          <div class="video-row-info">
+            <div class="video-row-title">003 — Nosso dia a dia no ateliê</div>
+            <div class="video-row-meta">
+              <span class="video-chip chip-views">3.111 views</span>
+              <span class="video-chip chip-ret high">51% ret.</span>
+            </div>
+          </div>
+          <div class="video-bar-wrap"><div class="video-bar-track"><div class="video-bar-fill" style="width:23%"></div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="reveal reveal-delay-2">
+      <div class="chart-label">Retenção média (%)</div>
+      <div class="chart-wrap">
+        <canvas id="retentionChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:40px" class="reveal">
+    <div class="chart-label">Likes por visualizações (%)</div>
+    <div class="chart-wrap" style="height:220px">
+      <canvas id="likesChart"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- AUDIENCE -->
+<section class="audience-s">
+  <div class="section-header reveal">
+    <span class="section-num">03</span>
+    <h2 class="section-title">Quem Assiste</h2>
+    <span class="section-desc">Perfil demográfico e dispositivos</span>
+  </div>
+  <div class="audience-grid">
+    <div class="aud-card accent reveal reveal-delay-1">
+      <div class="ac-label">Dispositivo principal</div>
+      <div class="ac-value">54%</div>
+      <div class="ac-sub">assiste na TV — não no celular. Esse público é de sofá, não de scroll.</div>
+    </div>
+    <div class="aud-card reveal reveal-delay-2">
+      <div class="ac-label">Gênero dominante</div>
+      <div class="ac-value" style="color:var(--bg)">76,2%</div>
+      <div class="ac-sub" style="color:rgba(250,248,245,0.5)">feminino</div>
+    </div>
+    <div class="aud-card reveal reveal-delay-3">
+      <div class="ac-label">Faixa etária top</div>
+      <div class="ac-value" style="color:var(--bg)">25–34</div>
+      <div class="ac-sub" style="color:rgba(250,248,245,0.5)">41,2% do público · seguido de 35–44 (23%)</div>
+    </div>
+  </div>
+  <div class="aud-charts">
+    <div class="aud-chart-card reveal">
+      <div class="aud-chart-title">Dispositivo (%)</div>
+      <div style="position:relative;height:220px"><canvas id="deviceChart"></canvas></div>
+    </div>
+    <div class="aud-chart-card reveal reveal-delay-2">
+      <div class="aud-chart-title">Faixa etária (%)</div>
+      <div style="position:relative;height:220px"><canvas id="ageChart"></canvas></div>
+    </div>
+  </div>
+  <div class="bottom-aud-grid">
+    <div class="aud-card reveal reveal-delay-1">
+      <div class="ac-label">Brasil</div>
+      <div class="ac-value" style="color:var(--bg)">89,5%</div>
+      <div class="ac-sub" style="color:rgba(250,248,245,0.5)">Portugal 2% · EUA 1,3%</div>
+    </div>
+    <div class="aud-card reveal reveal-delay-2">
+      <div class="ac-label">Novos espectadores</div>
+      <div class="ac-value" style="color:var(--bg)">94,1%</div>
+      <div class="ac-sub" style="color:rgba(250,248,245,0.5)">ainda sem recorrência — oportunidade</div>
+    </div>
+    <div class="aud-card reveal reveal-delay-3">
+      <div class="ac-label">Pico de audiência</div>
+      <div class="ac-value" style="font-size:32px;color:var(--bg)">Qua 22h</div>
+      <div class="ac-sub" style="color:rgba(250,248,245,0.5)">quarta-feira às 22:00 como horário de pico</div>
+    </div>
+  </div>
+</section>
+
+<!-- TRAFFIC -->
+<section class="traffic-s">
+  <div class="section-header reveal">
+    <span class="section-num">04</span>
+    <h2 class="section-title">Origem do Tráfego</h2>
+    <span class="section-desc">Como o público encontra o canal</span>
+  </div>
+  <div class="traffic-grid">
+    <div class="reveal">
+      <div class="traffic-editorial">
+        <em>77%</em><br>das impressões<br>são do<br>YouTube.
+        <span class="traffic-note">Algoritmo continua<br>distribuindo ativamente.<br>CTR estável em 5%.</span>
+      </div>
+    </div>
+    <div class="reveal reveal-delay-2">
+      <div class="traffic-row-full" style="border-top:1px solid var(--beige-light)">
+        <span class="traffic-source">Página inicial do YouTube</span>
+        <div class="traffic-bar"><div class="traffic-bar-fill" style="width:100%;background:var(--red)"></div></div>
+        <span class="traffic-pct">66,8%</span>
+      </div>
+      <div class="traffic-row-full">
+        <span class="traffic-source">Vídeos sugeridos</span>
+        <div class="traffic-bar"><div class="traffic-bar-fill" style="width:20%"></div></div>
+        <span class="traffic-pct">13,5%</span>
+      </div>
+      <div class="traffic-row-full">
+        <span class="traffic-source">Páginas do canal</span>
+        <div class="traffic-bar"><div class="traffic-bar-fill" style="width:12%"></div></div>
+        <span class="traffic-pct">8,3%</span>
+      </div>
+      <div class="traffic-row-full">
+        <span class="traffic-source">Externa (Instagram, etc.)</span>
+        <div class="traffic-bar"><div class="traffic-bar-fill" style="width:9%"></div></div>
+        <span class="traffic-pct">6,2%</span>
+      </div>
+      <div class="traffic-row-full">
+        <span class="traffic-source">Pesquisa do YouTube</span>
+        <div class="traffic-bar"><div class="traffic-bar-fill" style="width:2%"></div></div>
+        <span class="traffic-pct">1,4%</span>
+      </div>
+      <div style="margin-top:24px;padding:20px 0 0;border-top:1px solid var(--beige-light)">
+        <p style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Novo dado</p>
+        <p style="font-size:14px;color:var(--dark);font-weight:700">Pesquisa orgânica: 1,4% — canal começando a ser buscado</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MONETIZATION -->
+<section class="mono-s">
+  <div class="section-header reveal">
+    <span class="section-num">05</span>
+    <h2 class="section-title">Monetização</h2>
+    <span class="section-desc">Status YPP e projeções</span>
+  </div>
+  <div class="mono-progress-wrap reveal">
+    <div class="mono-progress-label">
+      <span class="pl-left">Horas de exibição para YPP — 3.431 de 4.000h <span style="color:var(--red)">atingido: 86%</span></span>
+      <span class="pl-right">faltam ~569h · previsão: 1–2 semanas</span>
+    </div>
+    <div class="mono-track"><div class="mono-fill" id="monoFill"></div></div>
+    <p style="font-size:12px;color:var(--muted);margin-top:8px;font-weight:400">Meta de inscritos (1.000) já atingida. Muito perto de desbloquear monetização completa.</p>
+  </div>
+  <div class="mono-grid">
+    <div class="mono-card reveal reveal-delay-1">
+      <div class="mc-tag">AdSense (estimativa)</div>
+      <div class="mc-val">R$500–2K</div>
+      <div class="mc-sub">por mês — fonte complementar</div>
+    </div>
+    <div class="mono-card highlight reveal reveal-delay-2">
+      <div class="mc-tag">Branded content</div>
+      <div class="mc-val">R$5K–20K</div>
+      <div class="mc-sub">1–2 vídeos patrocinados/mês — maior potencial</div>
+    </div>
+    <div class="mono-card reveal reveal-delay-3">
+      <div class="mc-tag">Venda da marca</div>
+      <div class="mc-val">Alto impacto</div>
+      <div class="mc-sub">canal como vitrine — conversão para o ateliê</div>
+    </div>
+  </div>
+</section>
+
+<!-- INSIGHTS -->
+<section class="insights-s">
+  <div class="section-header reveal">
+    <span class="section-num">06</span>
+    <h2 class="section-title">Insights Estratégicos</h2>
+    <span class="section-desc">O que os dados estão dizendo</span>
+  </div>
+  <div class="insights-grid">
+    <div class="insight-card reveal reveal-delay-1">
+      <div class="ic-num">01</div>
+      <div class="ic-tag">formato · duração</div>
+      <div class="ic-title">Conteúdo de sofá, não de scroll — invista nos 20min+</div>
+      <div class="ic-body">54% das views acontecem na TV. Os dois vídeos com maior retenção (003 e 004) têm mais de 6 minutos. O canal não compete com reels — compete com Netflix. Vídeos mais curtos e rápidos podem estar performando abaixo do potencial.</div>
+      <div class="ic-rec">→ Teste um vídeo de 20–30min. 1 entrega semanal bem produzida pode superar 2 entregas curtas.</div>
+    </div>
+    <div class="insight-card reveal reveal-delay-2">
+      <div class="ic-num">02</div>
+      <div class="ic-tag">conteúdo · diferencial</div>
+      <div class="ic-title">A relação mãe-filha é o ativo que nenhum concorrente copia</div>
+      <div class="ic-body">Em todos os comentários analisados, o tema mais citado não é moda — é a dinâmica entre Chica e Isabela. Espectadores estão se apaixonando pelos personagens. Esse vínculo é incopiável por qualquer marca ou criador do nicho.</div>
+      <div class="ic-rec">→ Priorize episódios com tensão real, decisões conjuntas e bastidores da relação. Conflito e resolução geram maratonagem.</div>
+    </div>
+    <div class="insight-card reveal reveal-delay-1">
+      <div class="ic-num">03</div>
+      <div class="ic-tag">algoritmo · urgência</div>
+      <div class="ic-title">O algoritmo está ativo — não deixe esfriar</div>
+      <div class="ic-body">66,8% das views vêm da página inicial. 77% das impressões são recomendações do YouTube. CTR estável em 5%. O Tour pelo ateliê (004) chegou a 6.662 views partindo do zero — o algoritmo está testando e aprovando o conteúdo de bastidores. Não mude o que está funcionando.</div>
+      <div class="ic-rec">→ Manter mínimo 1 vídeo/semana. Responder comentários nas primeiras 2h após publicação.</div>
+    </div>
+    <div class="insight-card reveal reveal-delay-2">
+      <div class="ic-num">04</div>
+      <div class="ic-tag">canal · gap</div>
+      <div class="ic-title">Zero Shorts — gap estratégico 100% aberto</div>
+      <div class="ic-body">O canal tem 0 Shorts. Com o material bruto existente (NY, ateliê, bastidores) dá para alimentar 2–3 Shorts por semana sem gravar nada novo. Shorts são um amplificador de descoberta e criam funil para os vídeos longos.</div>
+      <div class="ic-rec">→ 2–3 Shorts/semana cortados do material existente. Custo zero de produção, alcance multiplicado.</div>
+    </div>
+    <div class="insight-card reveal reveal-delay-1">
+      <div class="ic-num">05</div>
+      <div class="ic-tag">monetização · linha de chegada</div>
+      <div class="ic-title">A 569h do YPP — praticamente na linha de chegada</div>
+      <div class="ic-body">O canal está em 3.431 de 4.000 horas necessárias — 86% do caminho, com ambas as metas atingidas: 1.787 inscritos e crescimento consistente. Com o ritmo atual, o YPP deve ser ativado em 1 a 2 semanas. Esse é o momento de já pensar nos primeiros parceiros de branded content.</div>
+      <div class="ic-rec">→ Manter frequência nas próximas 2 semanas para cruzar a linha. Após ativação, priorizar branded content (R$5K–20K/vídeo) acima do AdSense.</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-title">Nepo Baby<br>da Moda</div>
+  <div class="footer-meta">
+    <span class="big">Not Yet × Nocci</span>
+    <p>Snapshot: 19 de março de 2026</p>
+    <p>28 dias · 5 vídeos · 40.7K views</p>
+    <p style="margin-top:8px;color:rgba(255,255,255,0.4)">@Chicapeto · YouTube Studio</p>
+  </div>
+</footer>
+
+<script>
+// CURSOR
+const dot = document.getElementById('cursorDot');
+const ring = document.getElementById('cursorRing');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.left=mx+'px';dot.style.top=my+'px'});
+function animRing(){rx+=(mx-rx)*0.12;ry+=(my-ry)*0.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(animRing)}
+animRing();
+document.querySelectorAll('a,button,.metric-item,.video-row,.aud-card,.insight-card,.mono-card').forEach(el=>{
+  el.addEventListener('mouseenter',()=>ring.classList.add('hover'));
+  el.addEventListener('mouseleave',()=>ring.classList.remove('hover'));
+});
+
+// LOADER
+window.addEventListener('load',()=>{
+  setTimeout(()=>document.getElementById('loader').classList.add('hidden'),1800);
+});
+
+// SCROLL REVEAL
+const observer = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible')}});
+},{threshold:0.1});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+
+// MONO PROGRESS
+const monoObserver = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){document.getElementById('monoFill').style.width='86%'}});
+},{threshold:0.5});
+monoObserver.observe(document.querySelector('.mono-progress-wrap'));
+
+// CHARTS
+const RED='#C0271D',BEIGE='#C9A882',LIGHT='#EDE3D8',DARK='#1A0F0D';
+
+// Retention
+new Chart(document.getElementById('retentionChart'),{
+  type:'bar',
+  data:{
+    labels:['Nepo Doc','001 NY','002 SJP','004 Tour','003 Ateliê'],
+    datasets:[{
+      data:[35.9,40.3,38.3,44.9,50.8],
+      backgroundColor:[BEIGE,BEIGE,BEIGE,RED,RED],
+      borderRadius:3,borderSkipped:false
+    }]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y.toFixed(1)+'%'}}},
+    scales:{
+      x:{grid:{display:false},ticks:{color:'#7A6355',font:{size:11,family:'Space Mono'}}},
+      y:{grid:{color:'#EDE3D8'},ticks:{callback:v=>v+'%',color:'#7A6355',font:{size:10}},min:0,max:60,
+        title:{display:true,text:'retenção média',color:'#C9A882',font:{size:10}}}
+    }
+  }
+});
+
+// Likes ratio
+new Chart(document.getElementById('likesChart'),{
+  type:'bar',
+  data:{
+    labels:['Nepo Doc 01','001 Nova York','002 SJP','004 Tour','003 Ateliê'],
+    datasets:[{
+      label:'Likes/Views %',
+      data:[6.2,5.4,4.5,5.5,5.7],
+      backgroundColor:[BEIGE,BEIGE,BEIGE,RED,RED],
+      borderRadius:3,borderSkipped:false
+    }]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y.toFixed(1)+'%'}}},
+    scales:{
+      x:{grid:{display:false},ticks:{color:'#7A6355',font:{size:11}}},
+      y:{grid:{color:'#EDE3D8'},ticks:{callback:v=>v+'%',color:'#7A6355',font:{size:10}},min:0,max:10}
+    }
+  }
+});
+
+// Device
+new Chart(document.getElementById('deviceChart'),{
+  type:'doughnut',
+  data:{
+    labels:['TV 54,3%','Mobile 27,2%','Desktop 13,1%','Tablet 5,4%'],
+    datasets:[{data:[54.3,27.2,13.1,5.4],backgroundColor:[RED,'#E05A50',BEIGE,LIGHT],borderWidth:0,hoverOffset:4}]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,cutout:'60%',
+    plugins:{
+      legend:{position:'bottom',labels:{color:'rgba(250,248,245,0.6)',font:{size:11,family:'Space Mono'},padding:12,boxWidth:10,boxHeight:10}},
+      tooltip:{callbacks:{label:c=>c.label+': '+c.parsed+'%'}}
+    }
+  }
+});
+
+// Age
+new Chart(document.getElementById('ageChart'),{
+  type:'bar',
+  data:{
+    labels:['18–24','25–34','35–44','45–54','55–64','65+'],
+    datasets:[{data:[10.0,41.2,23.0,13.3,8.0,4.6],backgroundColor:[LIGHT,RED,'#E05A50',BEIGE,LIGHT,LIGHT],borderRadius:3,borderSkipped:false}]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,indexAxis:'y',
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x.toFixed(1)+'%'}}},
+    scales:{
+      x:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{callback:v=>v+'%',color:'rgba(250,248,245,0.4)',font:{size:10}},min:0},
+      y:{grid:{display:false},ticks:{color:'rgba(250,248,245,0.55)',font:{size:11}}}
+    }
+  }
+});
+
+// HOVER 3D on insight cards
+document.querySelectorAll('.insight-card').forEach(card=>{
+  card.addEventListener('mousemove',e=>{
+    const rect=card.getBoundingClientRect();
+    const x=(e.clientX-rect.left)/rect.width-0.5;
+    const y=(e.clientY-rect.top)/rect.height-0.5;
+    card.style.transform=`translateY(-4px) perspective(800px) rotateY(${x*8}deg) rotateX(${-y*8}deg)`;
+  });
+  card.addEventListener('mouseleave',()=>{
+    card.style.transform='';
+    card.style.transition='transform 0.5s cubic-bezier(0.23,1,0.32,1)';
+    setTimeout(()=>card.style.transition='',500);
+  });
+});
+</script>
+</body>
+</html>
